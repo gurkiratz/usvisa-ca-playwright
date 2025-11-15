@@ -109,6 +109,15 @@ REQUEST_HEADERS = {
 # 4. Each session runs max 15 minutes (DATE_REQUEST_MAX_TIME)
 
 # Playwright Settings
-PLAYWRIGHT_HEADLESS = not SHOW_GUI  # Use existing SHOW_GUI setting
-PLAYWRIGHT_SLOW_MO = 100  # Slow down by 100ms per action for visibility
+PLAYWRIGHT_SLOW_MO = 50  # Slow down by 100ms per action for visibility
 PLAYWRIGHT_TIMEOUT = TIMEOUT * 1000  # Convert to milliseconds
+# Read PLAYWRIGHT_HEADLESS from environment, with fallback to SHOW_GUI
+# In CI/GitHub Actions, PLAYWRIGHT_HEADLESS should be explicitly set to 'true'
+PLAYWRIGHT_HEADLESS_ENV = os.getenv("PLAYWRIGHT_HEADLESS", "").lower()
+if PLAYWRIGHT_HEADLESS_ENV in ("true", "1", "yes"):
+    PLAYWRIGHT_HEADLESS = True
+elif PLAYWRIGHT_HEADLESS_ENV in ("false", "0", "no"):
+    PLAYWRIGHT_HEADLESS = False
+else:
+    # Fallback: use inverse of SHOW_GUI
+    PLAYWRIGHT_HEADLESS = not SHOW_GUI
