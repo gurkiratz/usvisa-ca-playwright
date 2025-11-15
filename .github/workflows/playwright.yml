@@ -1,0 +1,71 @@
+name: US Visa Rescheduler
+on:
+  schedule:
+    - cron: '0 0 * * *' # 7 PM EST (12 AM UTC) every day
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  reschedule:
+    name: Run US Visa Rescheduler
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+
+      - name: Cache Python dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Install Playwright browsers
+        run: |
+          python -m playwright install chromium
+          python -m playwright install-deps
+
+      - name: Run US Visa Rescheduler
+        run: |
+          python reschedule_playwright.py
+        env:
+          # Required environment variables
+          USER_EMAIL: ${{ secrets.USER_EMAIL }}
+          USER_PASSWORD: ${{ secrets.USER_PASSWORD }}
+          USER_CONSULATE: ${{ secrets.USER_CONSULATE || 'Toronto' }}
+          NUM_PARTICIPANTS: ${{ secrets.NUM_PARTICIPANTS || '1' }}
+          # Date preferences
+          EARLIEST_ACCEPTABLE_DATE: ${{ secrets.EARLIEST_ACCEPTABLE_DATE }}
+          LATEST_ACCEPTABLE_DATE: ${{ secrets.LATEST_ACCEPTABLE_DATE }}
+          # Email notification settings
+          GMAIL_SENDER_NAME: ${{ secrets.GMAIL_SENDER_NAME || 'Visa Appointment Reminder' }}
+          GMAIL_EMAIL: ${{ secrets.GMAIL_EMAIL }}
+          GMAIL_APPLICATION_PWD: ${{ secrets.GMAIL_APPLICATION_PWD }}
+          RECEIVER_NAME: ${{ secrets.RECEIVER_NAME || 'User' }}
+          RECEIVER_EMAIL: ${{ secrets.RECEIVER_EMAIL }}
+          # Automation settings for CI
+          PLAYWRIGHT_HEADLESS: true
+          SHOW_GUI: false
+          TEST_MODE: false
+
+      - name: Upload screenshots on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rescheduler-screenshots-${{ github.run_number }}
+          path: screenshots/
+          retention-days: 7

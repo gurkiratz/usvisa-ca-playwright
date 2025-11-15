@@ -83,11 +83,13 @@ TEST_MODE = True
 
 # Don't change the following unless you know what you are doing
 DETACH = True
-NEW_SESSION_AFTER_FAILURES = 5
-NEW_SESSION_DELAY = 300
-TIMEOUT = 10
-FAIL_RETRY_DELAY = 180
-DATE_REQUEST_DELAY = 180
+NEW_SESSION_AFTER_FAILURES = 5  # Creates a fresh browser session after 5 consecutive failures. This helps reset cookies, browser state, and potential blocking.
+NEW_SESSION_DELAY = 300  # Wait 5 minutes (300 seconds) before starting a new session. Prevents aggressive retries that might trigger rate limiting.
+TIMEOUT = 10  # General timeout for operations (10 seconds). Used for page loads, element waits, etc.
+FAIL_RETRY_DELAY = (
+    180  # Wait 3 minutes (180 seconds) after a generalfailure before retrying.
+)
+DATE_REQUEST_DELAY = 180  # Wait 3 minutes between each request for available dates.
 DATE_REQUEST_MAX_RETRY = 5
 DATE_REQUEST_MAX_TIME = 15 * 60
 LOGIN_URL = "https://ais.usvisa-info.com/en-ca/niv/users/sign_in"
@@ -99,6 +101,12 @@ PAYMENT_PAGE_URL = "https://ais.usvisa-info.com/en-ca/niv/schedule/{id}/payment"
 REQUEST_HEADERS = {
     "X-Requested-With": "XMLHttpRequest",
 }
+
+# Typical flow:
+# 1. Check for dates every 3 minutes (DATE_REQUEST_DELAY)
+# 2. If 5 failures occur (DATE_REQUEST_MAX_RETRY), wait 5 minutes (NEW_SESSION_DELAY)
+# 3. Start fresh browser session after 5 session failures (NEW_SESSION_AFTER_FAILURES)
+# 4. Each session runs max 15 minutes (DATE_REQUEST_MAX_TIME)
 
 # Playwright Settings
 PLAYWRIGHT_HEADLESS = not SHOW_GUI  # Use existing SHOW_GUI setting
