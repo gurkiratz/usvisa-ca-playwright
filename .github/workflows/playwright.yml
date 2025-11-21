@@ -1,12 +1,21 @@
 name: US Visa Rescheduler
 on:
   schedule:
-    - cron: '0 0 * * *' # 7 PM EST (12 AM UTC) every day
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
-  workflow_dispatch: # Allow manual triggering
+    - cron: '0 23 * * *' # 7 PM EST (12 AM UTC) every day
+  workflow_dispatch: # Allow manual trigger
+    inputs:
+      max_runtime_hours:
+        description: 'Maximum runtime in hours (max 6 for free tier)'
+        required: false
+        default: '5'
+        type: choice
+        options:
+          - '1'
+          - '2'
+          - '3'
+          - '4'
+          - '5'
+          - '6'
 
 jobs:
   reschedule:
@@ -14,7 +23,8 @@ jobs:
     timeout-minutes: 30
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - name: Checkout code
+        uses: actions/checkout@v5
 
       - name: Set up Python 3.13
         uses: actions/setup-python@v6
@@ -38,10 +48,58 @@ jobs:
         run: |
           python -m playwright install chromium
           python -m playwright install-deps
+      
+      - name: Validate required secrets
+        run: |
+          echo "Validating required secrets..."
+
+          # Check required account credentials
+          if [ -z "${{ secrets.USER_EMAIL }}" ]; then
+            echo "❌ ERROR: USER_EMAIL secret is required"
+            exit 1
+          fi
+
+          if [ -z "${{ secrets.USER_PASSWORD }}" ]; then
+            echo "❌ ERROR: USER_PASSWORD secret is required"
+            exit 1
+          fi
+
+          # Check date preferences
+          if [ -z "${{ secrets.EARLIEST_ACCEPTABLE_DATE }}" ]; then
+            echo "❌ ERROR: EARLIEST_ACCEPTABLE_DATE secret is required"
+            exit 1
+          fi
+
+          if [ -z "${{ secrets.LATEST_ACCEPTABLE_DATE }}" ]; then
+            echo "❌ ERROR: LATEST_ACCEPTABLE_DATE secret is required"
+            exit 1
+          fi
+
+          if [ -z "${{ secrets.USER_CONSULATE }}" ]; then
+            echo "❌ ERROR: USER_CONSULATE secret is required"
+            exit 1
+          fi
+
+          # Check Gmail notification settings
+          if [ -z "${{ secrets.GMAIL_EMAIL }}" ]; then
+            echo "❌ ERROR: GMAIL_EMAIL secret is required"
+            exit 1
+          fi
+
+          if [ -z "${{ secrets.GMAIL_APPLICATION_PWD }}" ]; then
+            echo "❌ ERROR: GMAIL_APPLICATION_PWD secret is required"
+            exit 1
+          fi
+
+          if [ -z "${{ secrets.RECEIVER_EMAIL }}" ]; then
+            echo "❌ ERROR: RECEIVER_EMAIL secret is required"
+            exit 1
+          fi
+
+          echo "✅ All required secrets are present"
+
 
       - name: Run US Visa Rescheduler
-        run: |
-          python reschedule_playwright.py
         env:
           # Required environment variables
           USER_EMAIL: ${{ secrets.USER_EMAIL }}
@@ -61,6 +119,11 @@ jobs:
           PLAYWRIGHT_HEADLESS: true
           SHOW_GUI: false
           TEST_MODE: false
+        run: |
+          echo "Starting visa appointment rescheduler..."
+          echo "Target dates: $EARLIEST_ACCEPTABLE_DATE to $LATEST_ACCEPTABLE_DATE"
+          echo "Consulate: $USER_CONSULATE"
+          python reschedule_playwright.py
 
       - name: Upload screenshots on failure
         if: failure()
