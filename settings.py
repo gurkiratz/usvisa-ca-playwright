@@ -59,7 +59,7 @@ CONSULATES = {
     "Vancouver": 95,
 }  # Only Toronto and Vancouver consulates are verified
 # Choose a city from the list above
-USER_CONSULATE = os.getenv("USER_CONSULATE")
+USER_CONSULATE = os.getenv("USER_CONSULATE", "Toronto")
 
 # The following is only required for the Gmail notification feature
 # Gmail login info

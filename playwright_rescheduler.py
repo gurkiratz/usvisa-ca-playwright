@@ -8,7 +8,7 @@ from settings import *
 
 def log_message(message: str) -> None:
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    print(f"[{timestamp}] {message}")
+    print(f"[{timestamp}] {message}", flush=True)
 
 
 def playwright_reschedule(page: Page, new_date: date) -> bool:

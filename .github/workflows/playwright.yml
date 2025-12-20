@@ -48,7 +48,7 @@ jobs:
         run: |
           python -m playwright install chromium
           python -m playwright install-deps
-      
+
       - name: Validate required secrets
         run: |
           echo "Validating required secrets..."
@@ -98,7 +98,6 @@ jobs:
 
           echo "✅ All required secrets are present"
 
-
       - name: Run US Visa Rescheduler
         env:
           # Required environment variables
@@ -119,11 +118,13 @@ jobs:
           PLAYWRIGHT_HEADLESS: true
           SHOW_GUI: false
           TEST_MODE: false
+          # Force unbuffered Python output for real-time logging
+          PYTHONUNBUFFERED: '1'
         run: |
           echo "Starting visa appointment rescheduler..."
           echo "Target dates: $EARLIEST_ACCEPTABLE_DATE to $LATEST_ACCEPTABLE_DATE"
           echo "Consulate: $USER_CONSULATE"
-          python reschedule_playwright.py
+          python -u reschedule_playwright.py
 
       - name: Upload screenshots on failure
         if: failure()
