@@ -1,13 +1,13 @@
 name: US Visa Rescheduler
 on:
   schedule:
-    - cron: '0 23 * * *' # 7 PM EST (12 AM UTC) every day
+    - cron: '0 24 * * *' # 7 PM EST (12 AM UTC) every day
   workflow_dispatch: # Allow manual trigger
     inputs:
       max_runtime_hours:
         description: 'Maximum runtime in hours (max 6 for free tier)'
         required: false
-        default: '5'
+        default: '6'
         type: choice
         options:
           - '1'
